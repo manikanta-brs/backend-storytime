@@ -18,119 +18,7 @@ const getDevice = (req, res) => {
   res.send(req.useragent.source);
 };
 
-/*create a new user*/
-// const createUser = async (req, res, next) => {
-//   const { first_name, last_name, email, password } = req.body;
-//   try {
-//     if (!first_name || !last_name || !email || !password) {
-//       const err = new Error(
-//         "Firstname, Lastname, Email and Password is required"
-//       );
-//       err.statusCode = 400;
-//       return next(err);
-//     }
-
-//     // check for valid email adress
-//     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-//     if (!emailRegex.test(email)) {
-//       res.status(400);
-//       const err = new Error("Invalid email address");
-//       return next(err);
-//     }
-
-//     // check for existing user''
-//     const userExists = await User.findOne({ email });
-//     if (userExists) {
-//       res.status(400);
-//       const err = new Error(
-//         "User with this email already exists. Please use a differnt email address"
-//       );
-//       err.statusCode = 409;
-//       return next(err);
-//     }
-
-//     // hash password
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     // generate token
-//     const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-//       expiresIn: "2h",
-//     });
-
-//     if (req.useragent.isMobile) {
-//       try {
-//         const verificationEmailResponse = await sendEmailVerificationLink(
-//           email,
-//           token,
-//           first_name
-//         );
-
-//         // send mail - handle err
-//         if (verificationEmailResponse.error) {
-//           const err = new Error(
-//             "Failed to send verification email, please try again later"
-//           );
-//           err.statusCode = 500;
-//           return next(err);
-//         }
-
-//         // save to DB
-//         const user = await User.create({
-//           first_name,
-//           last_name,
-//           email,
-//           password: hashedPassword,
-//           verify_token: token,
-//           verify_token_expires: Date.now() + 7200000,
-//         });
-//         // send mail success
-//         res.status(201).json({
-//           message:
-//             "Registered successfully. Please check your mail to verify the account",
-//         });
-//       } catch (error) {
-//         return next(error);
-//       }
-//     } else {
-//       const generatedCode = Math.floor(1000 + Math.random() * 9000);
-
-//       const verificationEmailResponse = await sendVerificationCode(
-//         first_name,
-//         email,
-//         generatedCode
-//       );
-
-//       // send mail - handle err
-//       if (verificationEmailResponse.error) {
-//         console.log(verificationEmailResponse.error);
-//         const err = new Error(
-//           "Failed to send verification code, please try again later"
-//         );
-//         err.statusCode = 500;
-//         return next(err);
-//       }
-
-//       // save to DB
-//       const user = await User.create({
-//         first_name,
-//         last_name,
-//         email,
-//         password: hashedPassword,
-//         otp: generatedCode,
-//         otp_expires_in: Date.now() + 7200000,
-//       });
-//       // send mail success
-//       res.status(201).json({
-//         message:
-//           "Registered successfully. Please check your mail to verify the account",
-//       });
-//     }
-
-//     // res.status(201).send("User registered successfully");
-//   } catch (error) {
-//     return next(error);
-//   }
-// };
+// create a new user
 const createUser = async (req, res, next) => {
   const { first_name, last_name, email, password } = req.body;
   try {
@@ -142,7 +30,7 @@ const createUser = async (req, res, next) => {
       return next(err);
     }
 
-    // Check for valid email address
+    // check for valid email adress
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       res.status(400);
@@ -150,60 +38,100 @@ const createUser = async (req, res, next) => {
       return next(err);
     }
 
-    // Check for existing user
+    // check for existing user''
     const userExists = await User.findOne({ email });
     if (userExists) {
       res.status(400);
       const err = new Error(
-        "User with this email already exists. Please use a different email address"
+        "User with this email already exists. Please use a differnt email address"
       );
       err.statusCode = 409;
       return next(err);
     }
 
-    // Hash password
+    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate token
+    // generate token
     const token = jwt.sign({ email }, process.env.JWT_SECRET, {
       expiresIn: "2h",
     });
 
-    // Send verification email
-    const verificationEmailResponse = await sendEmailVerificationLink(
-      email,
-      token,
-      first_name
-    );
+    if (req.useragent.isMobile) {
+      try {
+        const verificationEmailResponse = await sendEmailVerificationLink(
+          email,
+          token,
+          first_name
+        );
 
-    // Handle email sending error
-    if (verificationEmailResponse.error) {
-      const err = new Error(
-        "Failed to send verification email, please try again later"
+        // send mail - handle err
+        if (verificationEmailResponse.error) {
+          const err = new Error(
+            "Failed to send verification email, please try again later"
+          );
+          err.statusCode = 500;
+          return next(err);
+        }
+
+        // save to DB
+        const user = await User.create({
+          first_name,
+          last_name,
+          email,
+          password: hashedPassword,
+          verify_token: token,
+          verify_token_expires: Date.now() + 7200000,
+        });
+        // send mail success
+        res.status(201).json({
+          message:
+            "Registered successfully. Please check your mail to verify the account",
+        });
+      } catch (error) {
+        return next(error);
+      }
+    } else {
+      const generatedCode = Math.floor(1000 + Math.random() * 9000);
+
+      const verificationEmailResponse = await sendVerificationCode(
+        first_name,
+        email,
+        generatedCode
       );
-      err.statusCode = 500;
-      return next(err);
+
+      // send mail - handle err
+      if (verificationEmailResponse.error) {
+        console.log(verificationEmailResponse.error);
+        const err = new Error(
+          "Failed to send verification code, please try again later"
+        );
+        err.statusCode = 500;
+        return next(err);
+      }
+
+      // save to DB
+      const user = await User.create({
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+        otp: generatedCode,
+        otp_expires_in: Date.now() + 7200000,
+      });
+      // send mail success
+      res.status(201).json({
+        message:
+          "Registered successfully. Please check your mail to verify the account",
+      });
     }
 
-    // Save user to DB
-    const user = await User.create({
-      first_name,
-      last_name,
-      email,
-      password: hashedPassword,
-      verify_token: token,
-      verify_token_expires: Date.now() + 7200000, // 2 hours
-    });
-
-    // Respond with success message
-    res.status(201).json({
-      message:
-        "Registered successfully. Please check your email to verify the account",
-    });
+    // res.status(201).send("User registered successfully");
   } catch (error) {
     return next(error);
   }
 };
+
 const verifyEmail = async (req, res, next) => {
   try {
     // Find user based on verification token
@@ -223,12 +151,12 @@ const verifyEmail = async (req, res, next) => {
       }
     } else if (user.verified === true) {
       // If user is already verified
-      return res.status(200).send("Email is already verified. Please Login.");
+      return res.status(200).json("Email is already verified. Please Login.");
     } else {
       // If token is still valid, mark user as verified
       user.verified = true;
       await user.save();
-      return res.status(201).send("Email is verified. Please Login.");
+      return res.status(201).json("Email is verified. Please Login.");
     }
   } catch (error) {
     return next(error);
@@ -457,52 +385,30 @@ const generateSpotifyRefreshToken = async (req, res, next) => {
   }
 };
 
-// const getUserProfile = async (req, res, next) => {
-//   try {
-//     const user = await User.findById(req.user._id);
-
-//     if (!user) {
-//       const err = new Error("User not found");
-//       err.statusCode = 404;
-//       return next(err);
-//     }
-
-//     const profileData = {
-//       _id: user._id,
-//       first_name: user.first_name,
-//       last_name: user.last_name,
-//       email: user.email,
-//       languages: user.languages,
-//     };
-
-//     res.status(200).json({ profileData });
-//   } catch (error) {
-//     return next(error);
-//   }
-// };
-// Example transformation in getUserProfile controller
-const getUserProfile = async (req, res) => {
+const getUserProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await User.findById(req.user._id);
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      const err = new Error("User not found");
+      err.statusCode = 404;
+      return next(err);
     }
 
-    // Transform the data to the desired flat structure
-    const userData = {
+    const profileData = {
       _id: user._id,
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
       languages: user.languages,
-      // Add other fields as needed
     };
 
-    res.status(200).json(userData);
+    res.status(200).json({ profileData });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 };
+
 const updateUserProfile = async (req, res, next) => {
   const { first_name, last_name, email } = req.body;
   try {
@@ -629,9 +535,49 @@ const forgotPassword = async (req, res, next) => {
   }
 };
 
+// const resetPassword = async (req, res, next) => {
+//   const { token } = req.params;
+//   const { password } = req.body;
+
+//   if (!token) {
+//     const err = new Error("Token is required");
+//     err.statusCode = 400;
+//     return next(err);
+//   }
+//   if (!password) {
+//     const err = new Error("Password is required");
+//     err.statusCode = 400;
+//     return next(err);
+//   }
+//   try {
+//     // find the user by token
+//     const user = await User.findOne({
+//       reset_password_token: token,
+//       reset_password_expires: { $gt: Date.now() },
+//     });
+//     if (!user) {
+//       const err = new Error(
+//         "Password reset link is invalid or expired, please try again"
+//       );
+//       err.statusCode = 400;
+//       return next(err);
+//     }
+//     // user found - hash password
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     (user.password = hashedPassword), (user.reset_password_token = undefined);
+//     user.reset_password_epxpires = undefined;
+//     await user.save();
+//     res.status(200).json({
+//       message: "Password updated successfully, please login to continue",
+//     });
+//   } catch (error) {
+//     return next(error);
+//   }
+// };
 const resetPassword = async (req, res, next) => {
-  const { token } = req.params;
+  const { token } = req.params; // token is passed via URL parameter
   const { password } = req.body;
+
   if (!token) {
     const err = new Error("Token is required");
     err.statusCode = 400;
@@ -642,29 +588,45 @@ const resetPassword = async (req, res, next) => {
     err.statusCode = 400;
     return next(err);
   }
+
   try {
-    // find the user by token
+    // Find the user by token and check if the reset token has expired
     const user = await User.findOne({
       reset_password_token: token,
-      reset_password_epxpires: { $gt: Date.now() },
+      reset_password_expires: { $gt: Date.now() }, // Check if token is still valid
     });
+
+    // Log the token, current time, and token expiry for debugging
+    console.log("Reset Token:", token); // Log the reset token
+    console.log("Current Time:", Date.now()); // Log the current time
+    console.log("Token Expiry:", user?.reset_password_expires); // Log the token expiry date
+
     if (!user) {
+      console.log("User not found or token expired");
+
       const err = new Error(
         "Password reset link is invalid or expired, please try again"
       );
       err.statusCode = 400;
       return next(err);
     }
-    // user found - hash password
+
+    // Hash the new password
     const hashedPassword = await bcrypt.hash(password, 10);
-    (user.password = hashedPassword), (user.reset_password_token = undefined);
-    user.reset_password_epxpires = undefined;
+
+    // Update the user's password and clear the reset token and expiry
+    user.password = hashedPassword;
+    user.reset_password_token = undefined;
+    user.reset_password_expires = undefined;
+
+    // Save the updated user object
     await user.save();
+
     res.status(200).json({
       message: "Password updated successfully, please login to continue",
     });
   } catch (error) {
-    return next(error);
+    return next(error); // Pass any errors to the error-handling middleware
   }
 };
 

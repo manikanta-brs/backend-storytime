@@ -3,6 +3,7 @@ import ejs from "ejs";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 const currentFilePath = import.meta.url;
@@ -43,6 +44,8 @@ const mail = nodemailer.createTransport({
 
 const sendEmailVerificationLink = async (email, token, name) => {
   try {
+    const { token } = useParams(); // Extract token from URL
+
     const renderedContent = await ejs.renderFile(
       path.join(currentDirectory, "/../templates/confirmEmail.ejs"),
       { token, name }
@@ -63,7 +66,7 @@ const sendEmailVerificationLink = async (email, token, name) => {
 const sendPasswordResetLink = async (email, token, name) => {
   try {
     const renderedContent = await ejs.renderFile(
-      path.join(currentDirectory, "/../templates/reset_password_email.ejs"),
+      path.join(currentDirectory, "/../templates/reset_password.ejs"),
       { token, name }
     );
     const mailOptions = {
