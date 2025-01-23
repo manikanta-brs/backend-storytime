@@ -678,7 +678,7 @@ const removeSpotifyStory = async (req, res, next) => {
     }
     user.saved_stories.splice(index, 1);
     await user.save();
-    res.status(200).json({ message: "Story deleted successfully" });
+    res.status(200).json({ message: "Story removed successfully" });
   } catch (error) {
     return next(error);
   }
